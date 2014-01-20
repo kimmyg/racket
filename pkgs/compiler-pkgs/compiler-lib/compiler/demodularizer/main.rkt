@@ -17,7 +17,7 @@
 
 (define logger (make-logger 'demodularizer (current-logger)))
 
-(define (demodularize file-to-batch [output-file #f])
+(define (demodularize file-to-batch [output-file #f] [gc-toplevels gc-toplevels])
   (parameterize ([current-logger logger])
     (define-values (base name must-be-dir?) (split-path file-to-batch))
     (when must-be-dir?
@@ -48,6 +48,9 @@
         (merge-compilation-top get-modvar-rewrite batch-nodep)))
     
     (define batch-gcd
+      (gc-toplevels batch-merge))
+
+    #;(define batch-gcd
       (if (garbage-collect-toplevels-enabled)
           (begin
             (log-info "GC-ing top-levels")
