@@ -13,12 +13,14 @@
 (define ZOS (make-parameter #f))
 (define MODULE-IDX-MAP (make-parameter #f))
 (define PHASE*MODULE-CACHE (make-parameter #f))
+(define REQUIRED (make-parameter #f))
 
 (define (nodep-file file-to-batch)
   (define idx-map (make-hash))
   (parameterize ([ZOS (make-hash)]
                  [MODULE-IDX-MAP idx-map]
-                 [PHASE*MODULE-CACHE (make-hash)])
+                 [PHASE*MODULE-CACHE (make-hash)]
+                 [REQUIRED (make-hasheq)])
     (define (get-modvar-rewrite modidx)
       (define pth (mpi->path* modidx))
       (hash-ref idx-map pth
@@ -180,7 +182,7 @@
 (define (all-but-last l)
   (reverse (rest (reverse l))))
 
-(define REQUIRED (make-hasheq))
+
 (define (extract-modules ct)
   (cond
     [(compilation-top? ct)
@@ -190,16 +192,16 @@
        [(struct splice (mods))
         mods])]
     [(symbol? ct)
-     (if (hash-has-key? REQUIRED ct)
+     (if (hash-has-key? (REQUIRED) ct)
          empty
          (begin
-           (hash-set! REQUIRED ct #t)
+           (hash-set! (REQUIRED) ct #t)
            (list (make-req (make-stx (make-wrapped ct empty 'clean)) (make-toplevel 0 0 #f #f)))))]
     [(module-path-index? ct)
-     (if (hash-has-key? REQUIRED ct)
+     (if (hash-has-key? (REQUIRED) ct)
          empty
          (begin
-           (hash-set! REQUIRED ct #t)
+           (hash-set! (REQUIRED) ct #t)
            (list (make-req (make-stx (make-wrapped ct empty 'clean)) (make-toplevel 0 0 #f #f)))))]
     [(not ct)
      empty]

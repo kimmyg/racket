@@ -9,11 +9,12 @@
          "nodep.rkt"
          "update-toplevels.rkt")
 
-(define MODULE-TOPLEVEL-OFFSETS (make-hasheq))
+(define MODULE-TOPLEVEL-OFFSETS (make-parameter #f))
 
 (define current-get-modvar-rewrite (make-parameter #f))
 (define (merge-compilation-top get-modvar-rewrite top)
-  (parameterize ([current-get-modvar-rewrite get-modvar-rewrite])
+  (parameterize ([current-get-modvar-rewrite get-modvar-rewrite]
+                 [MODULE-TOPLEVEL-OFFSETS (make-hasheq)])
     (match top
       [(struct compilation-top (max-let-depth prefix form))
        (define-values (new-max-let-depth new-prefix gen-new-forms)
@@ -72,7 +73,7 @@
         (define tl (provide->toplevel sym pos))
         (log-debug (format "Rewriting ~a@~a of ~S to ~S" sym pos (mpi->path* modidx) tl))
         (match-define (toplevel-offset-rewriter rewrite-fun meta)
-                      (hash-ref MODULE-TOPLEVEL-OFFSETS self-modidx
+                      (hash-ref (MODULE-TOPLEVEL-OFFSETS) self-modidx
                                 (lambda ()
                                   (error 'compute-new-modvar "toplevel offset not yet computed: ~S" self-modidx))))
         (log-debug (format "Rewriting ~a@~a of ~S (which is ~a) with ~S" sym pos (mpi->path* modidx) tl meta))
@@ -142,8 +143,8 @@
      (define offset-meta (vector name srcname self-modidx))
      (log-debug "Setting toplevel offsets rewriter for ~S and it is currently ~S"
                 offset-meta
-                (hash-ref MODULE-TOPLEVEL-OFFSETS self-modidx #f))
-     (hash-set! MODULE-TOPLEVEL-OFFSETS self-modidx
+                (hash-ref (MODULE-TOPLEVEL-OFFSETS) self-modidx #f))
+     (hash-set! (MODULE-TOPLEVEL-OFFSETS) self-modidx
                 (toplevel-offset-rewriter
                  (lambda (n)
                    (log-debug "Finding offset ~a in ~S of ~S" n toplevel-remap offset-meta)
